@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../state/AuthContext'
 import { useRecruiter } from '../../state/RecruiterContext'
 
 const candidateNav = [
@@ -9,6 +10,15 @@ const candidateNav = [
 
 export function CandidateShell() {
   const { candidates, activeCandidateId, setActiveCandidateId, activeCandidate } = useRecruiter()
+  const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/login')
+  }
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || activeCandidate?.name || 'Candidate'
 
   return (
     <div className="min-h-screen bg-paper text-ink lg:grid lg:grid-cols-[260px_1fr]">
@@ -73,10 +83,10 @@ export function CandidateShell() {
         <header className="flex items-center justify-between border-b border-line bg-white/50 px-5 py-3.5 backdrop-blur-sm lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-xs font-medium text-mist">
-              {activeCandidate?.initials || 'C'}
+              {activeCandidate?.initials || displayName[0]?.toUpperCase() || 'C'}
             </div>
             <div>
-              <p className="text-sm font-medium text-ink">{activeCandidate?.name}</p>
+              <p className="text-sm font-medium text-ink">{displayName}</p>
               <p className="text-xs text-mute">{activeCandidate?.role || 'Candidate Profile'}</p>
             </div>
           </div>
@@ -86,13 +96,29 @@ export function CandidateShell() {
               to="/recruiter"
               className="rounded-full border border-line bg-paper px-3 py-1 text-xs font-medium text-mute transition hover:border-ink hover:text-ink"
             >
-              Switch to Recruiter
+              Recruiter Workspace
             </Link>
+            {user ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full border border-line bg-white px-3 py-1 text-xs text-mute transition hover:border-red-300 hover:text-red-600"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-mist transition hover:bg-ink-2"
+              >
+                Sign in
+              </Link>
+            )}
             <Link
               to="/candidate/passport"
               className="rounded-full bg-teal px-3.5 py-1.5 text-xs font-medium text-white transition hover:bg-teal/90"
             >
-              View Talent Passport
+              Talent Passport
             </Link>
           </div>
         </header>

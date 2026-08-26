@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../state/AuthContext'
 
 const nav = [
   { to: '/recruiter', label: 'Overview', end: true },
@@ -9,9 +10,23 @@ const nav = [
 
 export function AppShell() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, profile, signOut } = useAuth()
   const isRecruiter = location.pathname.startsWith('/recruiter')
 
   if (!isRecruiter) return <Outlet />
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'Recruiter'
+  const initials = displayName
+    .split(/\s+/)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('')
+    .slice(0, 2) || 'RC'
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/login')
+  }
 
   return (
     <div className="min-h-screen bg-paper text-ink lg:grid lg:grid-cols-[240px_1fr]">
@@ -56,16 +71,35 @@ export function AppShell() {
       </aside>
       <div className="min-w-0">
         <header className="flex items-center justify-between border-b border-line px-5 py-4 lg:px-8">
-          <p className="text-sm text-mute">Recruiter workspace</p>
+          <div>
+            <p className="text-sm text-mute">Recruiter workspace</p>
+            <p className="text-xs text-ink font-medium">{displayName}</p>
+          </div>
           <div className="flex items-center gap-3">
             <Link
               to="/candidate"
               className="rounded-full border border-line bg-paper px-3 py-1 text-xs font-medium text-mute transition hover:border-ink hover:text-ink"
             >
-              Switch to Candidate Portal
+              Candidate Portal
             </Link>
+            {user ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full border border-line bg-white px-3 py-1 text-xs text-mute transition hover:border-red-300 hover:text-red-600"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-mist transition hover:bg-ink-2"
+              >
+                Sign in
+              </Link>
+            )}
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-xs font-medium text-mist">
-              HK
+              {initials}
             </div>
           </div>
         </header>

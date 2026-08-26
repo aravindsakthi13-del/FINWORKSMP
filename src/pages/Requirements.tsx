@@ -35,9 +35,9 @@ export function RequirementsPage() {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    const created = addRequirement({
+    const created = await addRequirement({
       role: form.role,
       department: form.department || 'General',
       headcount: Number(form.headcount) || 1,
