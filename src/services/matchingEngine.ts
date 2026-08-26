@@ -105,10 +105,29 @@ export function calculateRequiredSkillScore(
       status = 'partial'
       evidence = `Referenced in prior work experience`
     } else {
-      coverageRatio = 0
-      status = 'missing'
-      evidence = `No verified assessment or project evidence found`
-      missingSkills.push(`${reqSkill.name} is missing or not evidenced`)
+      // Check transferable/adjacent skills (PRD v2.0 §6, §10 Hidden Talent Engine)
+      const candSkillNames = candidate.skills.map((s) => normalizeSkillName(s.name))
+      const transferableMatches = candSkillNames.filter((cs) => {
+        const adjacent = (cs in { python: 1, 'power bi': 1, tableau: 1, sql: 1, react: 1, excel: 1 })
+        return adjacent && (
+          (cs === 'python' && ['data analysis', 'sql', 'pandas'].includes(normReq)) ||
+          (cs === 'power bi' && ['tableau', 'excel', 'data analysis'].includes(normReq)) ||
+          (cs === 'tableau' && ['power bi', 'excel'].includes(normReq)) ||
+          (cs === 'sql' && ['data analysis', 'database'].includes(normReq)) ||
+          (cs === 'excel' && ['mis reporting', 'data analysis', 'reporting'].includes(normReq))
+        )
+      })
+
+      if (transferableMatches.length > 0) {
+        coverageRatio = 0.4
+        status = 'partial'
+        evidence = `Adjacent transferable capability from ${transferableMatches.join(', ')}`
+      } else {
+        coverageRatio = 0
+        status = 'missing'
+        evidence = `No verified assessment or project evidence found`
+        missingSkills.push(`${reqSkill.name} is missing or not evidenced`)
+      }
     }
 
     if (status === 'matched') {

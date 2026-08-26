@@ -1,14 +1,10 @@
 -- ==============================================================================
--- ADEPT SKILL MATCH PLATFORM — SUPABASE POSTGRESQL SCHEMA & SEED MIGRATION
+-- ADEPT UNIFIED AI EMPLOYMENT PLATFORM — SUPABASE SCHEMA (PRD v2.0)
 -- ==============================================================================
 
--- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 2. ENUMS & TYPES
--- (Handled via TEXT with CHECK constraints for maximum compatibility with Supabase client)
-
--- 3. PROFILES TABLE (Linked 1:1 with auth.users)
+-- 1. PROFILES TABLE (Linked 1:1 with auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
@@ -18,16 +14,17 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 4. COMPANIES TABLE
+-- 2. COMPANIES TABLE
 CREATE TABLE IF NOT EXISTS public.companies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
   location TEXT,
+  verified BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 5. RECRUITER PROFILES TABLE
+-- 3. RECRUITER PROFILES TABLE
 CREATE TABLE IF NOT EXISTS public.recruiter_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -35,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.recruiter_profiles (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 6. CANDIDATES TABLE
+-- 4. CANDIDATES TABLE
 CREATE TABLE IF NOT EXISTS public.candidates (
   id TEXT PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -49,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.candidates (
   email TEXT,
   phone TEXT,
   verified BOOLEAN DEFAULT false,
+  consent_share_passport BOOLEAN DEFAULT true,
   education JSONB NOT NULL DEFAULT '{}'::jsonb,
   preferences JSONB DEFAULT '[]'::jsonb,
   career_preferences JSONB DEFAULT '{}'::jsonb,
@@ -56,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.candidates (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 7. CANDIDATE SKILLS TABLE
+-- 5. CANDIDATE SKILLS TABLE
 CREATE TABLE IF NOT EXISTS public.candidate_skills (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
@@ -66,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.candidate_skills (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 8. CANDIDATE PROJECTS TABLE
+-- 6. CANDIDATE PROJECTS TABLE
 CREATE TABLE IF NOT EXISTS public.candidate_projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
@@ -77,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.candidate_projects (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 9. CANDIDATE EXPERIENCE TABLE
+-- 7. CANDIDATE EXPERIENCE TABLE
 CREATE TABLE IF NOT EXISTS public.candidate_experience (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
@@ -88,7 +86,7 @@ CREATE TABLE IF NOT EXISTS public.candidate_experience (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 10. CANDIDATE ASSESSMENTS TABLE
+-- 8. CANDIDATE ASSESSMENTS TABLE
 CREATE TABLE IF NOT EXISTS public.candidate_assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
@@ -99,7 +97,20 @@ CREATE TABLE IF NOT EXISTS public.candidate_assessments (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 11. HIRING REQUIREMENTS TABLE
+-- 9. SKILL EVIDENCE TABLE
+CREATE TABLE IF NOT EXISTS public.skill_evidence (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
+  skill_name TEXT NOT NULL,
+  evidence_type TEXT NOT NULL CHECK (evidence_type IN ('assessment', 'project', 'experience', 'certification', 'github')),
+  reference_title TEXT NOT NULL,
+  url TEXT,
+  score NUMERIC,
+  verified BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 10. HIRING REQUIREMENTS / JOBS TABLE
 CREATE TABLE IF NOT EXISTS public.hiring_requirements (
   id TEXT PRIMARY KEY,
   company_id UUID REFERENCES public.companies(id) ON DELETE SET NULL,
@@ -119,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.hiring_requirements (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 12. PIPELINE ENTRIES TABLE
+-- 11. PIPELINE ENTRIES TABLE (Recruiter Kanban)
 CREATE TABLE IF NOT EXISTS public.pipeline_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   requirement_id TEXT NOT NULL REFERENCES public.hiring_requirements(id) ON DELETE CASCADE,
@@ -128,6 +139,51 @@ CREATE TABLE IF NOT EXISTS public.pipeline_entries (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE (requirement_id, candidate_id)
+);
+
+-- 12. CANDIDATE APPLICATIONS TABLE (Candidate-Initiated)
+CREATE TABLE IF NOT EXISTS public.applications (
+  id TEXT PRIMARY KEY,
+  candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
+  requirement_id TEXT NOT NULL REFERENCES public.hiring_requirements(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'applied' CHECK (status IN ('applied', 'reviewing', 'interviewing', 'offered', 'rejected', 'withdrawn')),
+  match_score_at_application INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (candidate_id, requirement_id)
+);
+
+-- 13. SAVED JOBS TABLE
+CREATE TABLE IF NOT EXISTS public.saved_jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id TEXT NOT NULL REFERENCES public.candidates(id) ON DELETE CASCADE,
+  requirement_id TEXT NOT NULL REFERENCES public.hiring_requirements(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (candidate_id, requirement_id)
+);
+
+-- 14. NOTIFICATIONS TABLE
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('match_alert', 'application_update', 'shortlist_alert', 'system')),
+  link TEXT,
+  read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 15. AUDIT LOGS TABLE
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ==============================================================================
@@ -142,72 +198,57 @@ ALTER TABLE public.candidate_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_experience ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.skill_evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hiring_requirements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pipeline_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.saved_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Authenticated users can read profiles; users can only update their own profile
 CREATE POLICY "Allow public read on profiles" ON public.profiles FOR SELECT TO authenticated, anon USING (true);
 CREATE POLICY "Allow users to update own profile" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 CREATE POLICY "Allow users to insert own profile" ON public.profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
--- Companies: All authenticated users can read companies; recruiters/admins can insert
 CREATE POLICY "Allow read on companies" ON public.companies FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Allow authenticated to insert companies" ON public.companies FOR INSERT TO authenticated WITH CHECK (true);
-
--- Candidates: All authenticated users can read candidates; candidates can update their own
 CREATE POLICY "Allow read on candidates" ON public.candidates FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Allow candidates to insert own profile" ON public.candidates FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
-CREATE POLICY "Allow candidates to update own profile" ON public.candidates FOR UPDATE TO authenticated USING (auth.uid() = user_id OR user_id IS NULL);
+CREATE POLICY "Allow candidates to update own" ON public.candidates FOR UPDATE TO authenticated USING (auth.uid() = user_id OR user_id IS NULL);
 
--- Candidate Skills: Read all, mutate if owning candidate
-CREATE POLICY "Allow read on candidate_skills" ON public.candidate_skills FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Allow candidate to insert skill" ON public.candidate_skills FOR INSERT TO authenticated WITH CHECK (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_skills.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to update skill" ON public.candidate_skills FOR UPDATE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_skills.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to delete skill" ON public.candidate_skills FOR DELETE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_skills.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
+CREATE POLICY "Allow read on skills" ON public.candidate_skills FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow candidates to insert skills" ON public.candidate_skills FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow candidates to update skills" ON public.candidate_skills FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Allow candidates to delete skills" ON public.candidate_skills FOR DELETE TO authenticated USING (true);
 
--- Candidate Projects: Read all, mutate if owning candidate
-CREATE POLICY "Allow read on candidate_projects" ON public.candidate_projects FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Allow candidate to insert project" ON public.candidate_projects FOR INSERT TO authenticated WITH CHECK (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_projects.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to update project" ON public.candidate_projects FOR UPDATE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_projects.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to delete project" ON public.candidate_projects FOR DELETE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_projects.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
+CREATE POLICY "Allow read on projects" ON public.candidate_projects FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow candidates to insert projects" ON public.candidate_projects FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow candidates to update projects" ON public.candidate_projects FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Allow candidates to delete projects" ON public.candidate_projects FOR DELETE TO authenticated USING (true);
 
--- Candidate Experience: Read all, mutate if owning candidate
-CREATE POLICY "Allow read on candidate_experience" ON public.candidate_experience FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Allow candidate to insert experience" ON public.candidate_experience FOR INSERT TO authenticated WITH CHECK (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_experience.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to update experience" ON public.candidate_experience FOR UPDATE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_experience.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
-CREATE POLICY "Allow candidate to delete experience" ON public.candidate_experience FOR DELETE TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.candidates WHERE candidates.id = candidate_experience.candidate_id AND (candidates.user_id = auth.uid() OR candidates.user_id IS NULL))
-);
+CREATE POLICY "Allow read on experience" ON public.candidate_experience FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow read on assessments" ON public.candidate_assessments FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow read on skill_evidence" ON public.skill_evidence FOR SELECT TO authenticated, anon USING (true);
 
--- Candidate Assessments: Read all
-CREATE POLICY "Allow read on candidate_assessments" ON public.candidate_assessments FOR SELECT TO authenticated, anon USING (true);
-
--- Hiring Requirements: Read all, insert/update by authenticated recruiters
 CREATE POLICY "Allow read on hiring_requirements" ON public.hiring_requirements FOR SELECT TO authenticated, anon USING (true);
 CREATE POLICY "Allow authenticated to insert requirements" ON public.hiring_requirements FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Allow authenticated to update requirements" ON public.hiring_requirements FOR UPDATE TO authenticated USING (true);
 
--- Pipeline Entries: Read all, insert/update by authenticated recruiters
 CREATE POLICY "Allow read on pipeline_entries" ON public.pipeline_entries FOR SELECT TO authenticated, anon USING (true);
 CREATE POLICY "Allow authenticated to insert pipeline" ON public.pipeline_entries FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Allow authenticated to update pipeline" ON public.pipeline_entries FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "Allow authenticated to delete pipeline" ON public.pipeline_entries FOR DELETE TO authenticated USING (true);
+
+CREATE POLICY "Allow read on applications" ON public.applications FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow candidate to insert application" ON public.applications FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow candidate to update application" ON public.applications FOR UPDATE TO authenticated USING (true);
+
+CREATE POLICY "Allow read on saved_jobs" ON public.saved_jobs FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow candidate to insert saved_jobs" ON public.saved_jobs FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow candidate to delete saved_jobs" ON public.saved_jobs FOR DELETE TO authenticated USING (true);
+
+CREATE POLICY "Allow read on notifications" ON public.notifications FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow update on notifications" ON public.notifications FOR UPDATE TO authenticated USING (true);
+
+CREATE POLICY "Allow insert audit_logs" ON public.audit_logs FOR INSERT TO authenticated, anon WITH CHECK (true);
 
 -- ==============================================================================
 -- AUTOMATIC PROFILE TRIGGER ON SIGNUP
@@ -228,7 +269,7 @@ BEGIN
 
   IF user_role = 'candidate' THEN
     INSERT INTO public.candidates (
-      id, user_id, name, role, initials, location, work_mode, availability, experience_summary, verified, education, preferences, career_preferences
+      id, user_id, name, role, initials, location, work_mode, availability, experience_summary, verified, consent_share_passport, education, preferences, career_preferences
     )
     VALUES (
       'c-' || substr(new.id::text, 1, 8),
@@ -241,6 +282,7 @@ BEGIN
       'Immediate',
       'Motivated candidate ready for skills-first employment.',
       false,
+      true,
       '{"degree": "Bachelor Degree", "school": "University", "year": "2026", "relevance": "Core coursework"}'::jsonb,
       '["Hybrid", "Full-time"]'::jsonb,
       '{"targetRoles": ["Junior Analyst", "Associate"], "industries": ["Tech"], "workMode": "Hybrid", "salaryExpectation": "Competitive", "availability": "Immediate"}'::jsonb
@@ -262,12 +304,12 @@ CREATE TRIGGER on_auth_user_created
 -- ==============================================================================
 
 -- 1. Seed Company
-INSERT INTO public.companies (id, name, description, location)
-VALUES ('00000000-0000-0000-0000-000000000001', 'Harbor Collective', 'Insights and employment intelligence group', 'Chennai')
+INSERT INTO public.companies (id, name, description, location, verified)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Harbor Collective', 'Insights and employment intelligence group', 'Chennai', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 2. Seed Candidates
-INSERT INTO public.candidates (id, name, role, initials, location, work_mode, availability, experience_summary, verified, education, preferences, career_preferences)
+INSERT INTO public.candidates (id, name, role, initials, location, work_mode, availability, experience_summary, verified, consent_share_passport, education, preferences, career_preferences)
 VALUES
 (
   'c-ananya',
@@ -278,6 +320,7 @@ VALUES
   'Hybrid',
   'Immediate · 15-day notice',
   '6-month analytics internship + freelance dashboards',
+  true,
   true,
   '{"degree": "B.Sc. Statistics", "school": "University of Madras", "year": "2025", "relevance": "Coursework in inference, SQL labs, and applied statistics maps directly to analyst work."}'::jsonb,
   '["Chennai or hybrid", "Analyst / BI path", "₹4.8–6.5 LPA"]'::jsonb,
@@ -293,6 +336,7 @@ VALUES
   '30-day notice',
   '14 months as junior BA; heavy Excel and stakeholder reporting',
   true,
+  true,
   '{"degree": "B.Com (Hons)", "school": "Loyola College", "year": "2024", "relevance": "Finance and MIS electives; less statistical depth than a stats degree."}'::jsonb,
   '["Hybrid Chennai", "Business-facing analytics", "₹5.5–7 LPA"]'::jsonb,
   '{"targetRoles": ["Business Analyst", "Operations Analyst"], "industries": ["Finance", "Consulting"], "workMode": "Hybrid", "salaryExpectation": "₹5.5–7 LPA", "availability": "30-day notice"}'::jsonb
@@ -306,6 +350,7 @@ VALUES
   'Hybrid / relocate to Chennai',
   'Campus · June joining window',
   'Academic projects and a 3-month research assistantship',
+  true,
   true,
   '{"degree": "B.Tech Information Technology", "school": "PSG College of Technology", "year": "2026", "relevance": "Strong Python and databases; limited business-domain exposure."}'::jsonb,
   '["Willing to relocate to Chennai", "Learning-heavy first role", "₹4–5.5 LPA"]'::jsonb,
@@ -321,6 +366,7 @@ VALUES
   '45-day notice',
   '2 years in MIS reporting; Excel-first, light SQL',
   false,
+  true,
   '{"degree": "BBA", "school": "SRM University", "year": "2023", "relevance": "Business fundamentals; no formal statistics or CS core."}'::jsonb,
   '["Chennai on-site", "Reporting to analytics path", "₹4–6 LPA"]'::jsonb,
   '{"targetRoles": ["Reporting Analyst", "MIS Specialist"], "industries": ["Logistics", "Operations"], "workMode": "On-site preferred", "salaryExpectation": "₹4–6 LPA", "availability": "45-day notice"}'::jsonb
@@ -334,6 +380,7 @@ VALUES
   'Hybrid',
   'Immediate',
   '2 years shipping React product UI',
+  true,
   true,
   '{"degree": "B.E. Computer Science", "school": "RV College of Engineering", "year": "2024", "relevance": "CS core plus internships in product engineering."}'::jsonb,
   '["Bengaluru hybrid", "Product frontend", "₹12–15 LPA"]'::jsonb,
@@ -451,4 +498,10 @@ INSERT INTO public.hiring_requirements (id, company_id, role, department, headco
   9,
   2
 )
+ON CONFLICT (id) DO NOTHING;
+
+-- 8. Seed Candidate Applications
+INSERT INTO public.applications (id, candidate_id, requirement_id, status, match_score_at_application, created_at) VALUES
+('app-ananya-01', 'c-ananya', 'req-data-analyst', 'interviewing', 84, now() - INTERVAL '2 days'),
+('app-rohan-01', 'c-rohan', 'req-data-analyst', 'reviewing', 74, now() - INTERVAL '3 days')
 ON CONFLICT (id) DO NOTHING;

@@ -6,6 +6,20 @@ export type SkillLevel = 'expert' | 'strong' | 'working'
 
 export type SkillMatchStatus = 'matched' | 'partial' | 'missing'
 
+export type ApplicationStatus =
+  | 'applied'
+  | 'reviewing'
+  | 'interviewing'
+  | 'offered'
+  | 'rejected'
+  | 'withdrawn'
+
+export type NotificationType =
+  | 'match_alert'
+  | 'application_update'
+  | 'shortlist_alert'
+  | 'system'
+
 export interface SkillWeight {
   name: string
   weight: number
@@ -26,6 +40,8 @@ export interface Requirement {
   createdAt: string
   potentialMatches: number
   verifiedMatches: number
+  companyName?: string
+  companyVerified?: boolean
 }
 
 export interface Project {
@@ -90,6 +106,7 @@ export interface Candidate {
   preferences: string[]
   careerPreferences?: CandidateCareerPreferences
   verified: boolean
+  consentSharePassport?: boolean
 }
 
 export interface ScoreBreakdown {
@@ -105,6 +122,7 @@ export interface SkillMatch {
   weight: number
   status: SkillMatchStatus
   evidence: string
+  transferableFrom?: string
 }
 
 export interface Match {
@@ -118,4 +136,52 @@ export interface Match {
   educationFit: string
   locationFit: string
   availabilityFit: string
+}
+
+export interface Application {
+  id: string
+  requirementId: string
+  candidateId: string
+  status: ApplicationStatus
+  matchScoreAtApplication: number
+  appliedAt: string
+  notes?: string
+}
+
+export interface SavedJob {
+  candidateId: string
+  requirementId: string
+  savedAt: string
+}
+
+export interface Notification {
+  id: string
+  userId: string
+  title: string
+  message: string
+  type: NotificationType
+  link?: string
+  read: boolean
+  createdAt: string
+}
+
+export interface SkillEvidence {
+  id: string
+  candidateId: string
+  skillName: string
+  evidenceType: 'assessment' | 'project' | 'experience' | 'certification' | 'github'
+  referenceTitle: string
+  url?: string
+  score?: number
+  verified: boolean
+}
+
+export interface AuditLog {
+  id: string
+  userId?: string
+  action: string
+  entityType: string
+  entityId: string
+  metadata?: Record<string, unknown>
+  createdAt: string
 }
