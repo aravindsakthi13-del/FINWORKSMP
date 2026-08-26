@@ -1,20 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
-import { matchesForRequirement } from '../data/matches'
 import { useRecruiter } from '../state/RecruiterContext'
 
 export function MatchingPage() {
   const { requirementId = '' } = useParams()
-  const { requirements, candidates, shortlist, getStage } = useRecruiter()
+  const { requirements, candidates, shortlist, getStage, getMatchesForRequirement } = useRecruiter()
   const req = requirements.find((r) => r.id === requirementId)
-  const [minScore, setMinScore] = useState(70)
+  const [minScore, setMinScore] = useState(60)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [availableSoon, setAvailableSoon] = useState(false)
 
   const rows = useMemo(() => {
     if (!req) return []
-    return matchesForRequirement(req.id)
+    return getMatchesForRequirement(req.id)
       .map((match) => {
         const candidate = candidates.find((c) => c.id === match.candidateId)
         return candidate ? { match, candidate } : null
@@ -27,7 +26,7 @@ export function MatchingPage() {
           ? /immediate|15/i.test(row.candidate.availability)
           : true,
       )
-  }, [availableSoon, candidates, minScore, req, verifiedOnly])
+  }, [availableSoon, candidates, getMatchesForRequirement, minScore, req, verifiedOnly])
 
   if (!req) {
     return <p>Requirement not found.</p>
@@ -49,7 +48,7 @@ export function MatchingPage() {
           <span className="mr-2 text-mute">Min match</span>
           <input
             type="range"
-            min={60}
+            min={40}
             max={95}
             value={minScore}
             onChange={(e) => setMinScore(Number(e.target.value))}

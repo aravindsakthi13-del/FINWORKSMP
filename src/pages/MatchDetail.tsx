@@ -1,7 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
 import { ScoreRing } from '../components/ui/ScoreRing'
-import { matchFor } from '../data/matches'
 import { useRecruiter } from '../state/RecruiterContext'
 
 const statusTone = {
@@ -12,19 +11,19 @@ const statusTone = {
 
 export function MatchDetailPage() {
   const { requirementId = '', candidateId = '' } = useParams()
-  const { requirements, candidates, shortlist, getStage } = useRecruiter()
+  const { requirements, candidates, shortlist, getStage, getMatch } = useRecruiter()
   const req = requirements.find((r) => r.id === requirementId)
   const candidate = candidates.find((c) => c.id === candidateId)
-  const match = matchFor(requirementId, candidateId)
+  const match = getMatch(requirementId, candidateId)
   const stage = getStage(candidateId, requirementId)
 
   if (!req || !candidate || !match) {
     return (
       <div>
         <h1 className="font-serif text-3xl">Match not available</h1>
-        <p className="mt-2 text-mute">This demo only has scored matches for seeded requirements.</p>
+        <p className="mt-2 text-mute">Requirement or candidate could not be found.</p>
         <Link to="/recruiter/requirements" className="mt-4 inline-block text-teal hover:underline">
-          Back
+          Back to requirements
         </Link>
       </div>
     )

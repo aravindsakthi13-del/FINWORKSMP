@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom'
 import { StatCard } from '../components/dashboard/StatCard'
 import { Badge } from '../components/ui/Badge'
-import { matches } from '../data/matches'
 import { STAGE_LABEL } from '../data/pipeline'
 import { useRecruiter } from '../state/RecruiterContext'
 
 export function DashboardPage() {
-  const { requirements, pipeline, candidates } = useRecruiter()
+  const { requirements, pipeline, candidates, getMatchesForRequirement } = useRecruiter()
   const active = requirements.filter((r) => r.status === 'active')
   const headcount = active.reduce((sum, r) => sum + r.headcount, 0)
   const potential = active.reduce((sum, r) => sum + r.potentialMatches, 0)
   const verified = active.reduce((sum, r) => sum + r.verifiedMatches, 0)
   const shortlisted = pipeline.filter((p) => p.stage === 'shortlisted').length
   const interviews = pipeline.filter((p) => p.stage === 'interview' || p.stage === 'offer' || p.stage === 'hired').length
+
+  const topDataAnalystMatches = getMatchesForRequirement('req-data-analyst').slice(0, 3)
 
   return (
     <div className="space-y-8">
@@ -88,28 +89,24 @@ export function DashboardPage() {
           <h2 className="font-serif text-xl">Top evidence matches</h2>
           <p className="mt-1 text-sm text-mute">Highest scores on the Data Analyst requirement.</p>
           <ul className="mt-4 space-y-3">
-            {matches
-              .filter((m) => m.requirementId === 'req-data-analyst')
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 3)
-              .map((m) => {
-                const person = candidates.find((c) => c.id === m.candidateId)
-                if (!person) return null
-                return (
-                  <li key={m.candidateId}>
-                    <Link
-                      to={`/recruiter/requirements/req-data-analyst/matches/${person.id}`}
-                      className="flex items-center justify-between rounded-xl border border-transparent px-2 py-2 transition hover:border-line hover:bg-mist/50"
-                    >
-                      <div>
-                        <p className="font-medium">{person.name}</p>
-                        <p className="text-xs text-mute">{person.role}</p>
-                      </div>
-                      <span className="font-serif text-2xl text-teal">{m.score}%</span>
-                    </Link>
-                  </li>
-                )
-              })}
+            {topDataAnalystMatches.map((m) => {
+              const person = candidates.find((c) => c.id === m.candidateId)
+              if (!person) return null
+              return (
+                <li key={m.candidateId}>
+                  <Link
+                    to={`/recruiter/requirements/req-data-analyst/matches/${person.id}`}
+                    className="flex items-center justify-between rounded-xl border border-transparent px-2 py-2 transition hover:border-line hover:bg-mist/50"
+                  >
+                    <div>
+                      <p className="font-medium">{person.name}</p>
+                      <p className="text-xs text-mute">{person.role}</p>
+                    </div>
+                    <span className="font-serif text-2xl text-teal">{m.score}%</span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </div>
         <div className="rounded-2xl border border-line bg-white p-5">

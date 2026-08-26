@@ -1,12 +1,11 @@
 import { Link, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
 import { SkillBar } from '../components/ui/SkillBar'
-import { matchesForRequirement } from '../data/matches'
 import { useRecruiter } from '../state/RecruiterContext'
 
 export function RequirementDetailPage() {
   const { requirementId = '' } = useParams()
-  const { requirements } = useRecruiter()
+  const { requirements, getMatchesForRequirement } = useRecruiter()
   const req = requirements.find((r) => r.id === requirementId)
 
   if (!req) {
@@ -20,7 +19,7 @@ export function RequirementDetailPage() {
     )
   }
 
-  const ranked = matchesForRequirement(req.id)
+  const ranked = getMatchesForRequirement(req.id)
 
   return (
     <div className="space-y-8">
