@@ -42,13 +42,31 @@ export function AppShell() {
           <p className="text-xs uppercase tracking-[0.16em] text-mist/40">Workspace</p>
           <p className="mt-2 text-sm text-mist/80">Harbor Collective</p>
           <p className="text-xs text-mist/45">Recruiter · Insights hiring</p>
+
+          <div className="mt-6 rounded-xl border border-white/10 bg-ink-2/60 p-3">
+            <p className="text-xs text-mist/60">Candidate portal</p>
+            <Link
+              to="/candidate"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal/20 px-3 py-1.5 text-xs font-medium text-teal-bright transition hover:bg-teal/30"
+            >
+              <span>👤</span> Candidate Portal
+            </Link>
+          </div>
         </div>
       </aside>
       <div className="min-w-0">
         <header className="flex items-center justify-between border-b border-line px-5 py-4 lg:px-8">
           <p className="text-sm text-mute">Recruiter workspace</p>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-xs font-medium text-mist">
-            HK
+          <div className="flex items-center gap-3">
+            <Link
+              to="/candidate"
+              className="rounded-full border border-line bg-paper px-3 py-1 text-xs font-medium text-mute transition hover:border-ink hover:text-ink"
+            >
+              Switch to Candidate Portal
+            </Link>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-xs font-medium text-mist">
+              HK
+            </div>
           </div>
         </header>
         <main className="px-5 py-6 lg:px-8 lg:py-8">

@@ -5,12 +5,20 @@ export function LandingPage() {
     <div className="min-h-screen bg-ink text-mist">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <p className="font-serif text-2xl tracking-tight">Adept</p>
-        <Link
-          to="/recruiter"
-          className="rounded-full bg-mist px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
-        >
-          Recruiter workspace
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/candidate"
+            className="rounded-full border border-mist/20 px-4 py-2 text-sm font-medium text-mist transition hover:border-mist/50 hover:text-white"
+          >
+            Candidate portal
+          </Link>
+          <Link
+            to="/recruiter"
+            className="rounded-full bg-mist px-4 py-2 text-sm font-medium text-ink transition hover:bg-white"
+          >
+            Recruiter workspace
+          </Link>
+        </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-10 lg:pt-20">
@@ -27,22 +35,27 @@ export function LandingPage() {
           className="animate-fade-up mt-6 max-w-xl text-lg leading-relaxed text-mist/70"
           style={{ animationDelay: '140ms' }}
         >
-          Adept is not a job board. Companies define hiring requirements. The platform matches
-          people on verified skills, projects, and evidence — then explains the score so recruiters
-          can shortlist with confidence.
+          Adept is not a job board. Companies define structured hiring requirements. Candidates build
+          verified Talent Passports. Our dynamic matching engine explains the score on both sides.
         </p>
         <div className="animate-fade-up mt-10 flex flex-wrap gap-3" style={{ animationDelay: '200ms' }}>
           <Link
-            to="/recruiter"
+            to="/candidate"
             className="rounded-full bg-teal-bright px-6 py-3 text-sm font-semibold text-ink transition hover:bg-teal-bright/90"
           >
-            Enter recruiter dashboard
+            Open Candidate Portal
+          </Link>
+          <Link
+            to="/recruiter"
+            className="rounded-full border border-mist/30 px-6 py-3 text-sm font-medium text-mist transition hover:border-mist/70 hover:bg-mist/5"
+          >
+            Enter Recruiter Dashboard
           </Link>
           <Link
             to="/recruiter/requirements/req-data-analyst/matches"
-            className="rounded-full border border-mist/20 px-6 py-3 text-sm font-medium text-mist transition hover:border-mist/50"
+            className="rounded-full border border-mist/15 px-6 py-3 text-sm font-medium text-mist/75 transition hover:border-mist/40"
           >
-            See a 92% explainable match
+            See explainable matching
           </Link>
         </div>
       </section>
@@ -56,11 +69,11 @@ export function LandingPage() {
             },
             {
               title: 'Evidence over keywords',
-              body: 'Assessments, projects, internships, and education sit behind every score. Recruiters see why, not just who.',
+              body: 'Assessments, projects, internships, and education sit behind every score. Both candidates and recruiters see why.',
             },
             {
-              title: 'A pipeline you can defend',
-              body: 'Shortlist, interview, offer, hired — every move stays attached to the same explainable match.',
+              title: 'Portable Talent Passport',
+              body: 'A dynamic, verifiable profile that highlights demonstrated skills and real project outcomes without static resume noise.',
             },
           ].map((item) => (
             <article key={item.title} className="rounded-2xl border border-white/8 bg-ink-3/60 p-6">

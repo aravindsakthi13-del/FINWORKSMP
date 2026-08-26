@@ -32,6 +32,7 @@ export interface Project {
   title: string
   description: string
   skills: string[]
+  link?: string
 }
 
 export interface ExperienceItem {
@@ -54,26 +55,40 @@ export interface CandidateSkill {
   verified: boolean
 }
 
+export interface CandidateEducation {
+  degree: string
+  school: string
+  fieldOfStudy?: string
+  year: string
+  relevance: string
+}
+
+export interface CandidateCareerPreferences {
+  targetRoles: string[]
+  industries: string[]
+  workMode: string
+  salaryExpectation: string
+  availability: string
+}
+
 export interface Candidate {
   id: string
   name: string
+  email?: string
+  phone?: string
   role: string
   initials: string
   location: string
   workMode: string
   availability: string
   experienceSummary: string
-  education: {
-    degree: string
-    school: string
-    year: string
-    relevance: string
-  }
+  education: CandidateEducation
   skills: CandidateSkill[]
   projects: Project[]
   experience: ExperienceItem[]
   assessments: Assessment[]
   preferences: string[]
+  careerPreferences?: CandidateCareerPreferences
   verified: boolean
 }
 
