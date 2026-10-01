@@ -651,7 +651,7 @@ During systemic crashes (e.g. 2008, March 2020), leveraged funds face margin cal
       name: 'OmniMarket Global 500 ETF',
       category: 'Broad Index ETF',
       icon: '🌐',
-      color: '#6366f1',
+      color: '#14b8a6',
       price: 412.00,
       basePrice: 412.00,
       historicalPrices: [398.0, 401.5, 405.0, 403.8, 408.2, 410.5, 412.0],

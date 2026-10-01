@@ -172,6 +172,30 @@ class FincateEngine {
   }
 
   // --------------------------------------------------------------------------
+  // BRAND ASSETS & SVG LOGO GENERATOR
+  // --------------------------------------------------------------------------
+  getFinacateSymbolSVG(color = 'currentColor', size = '100%') {
+    return `
+      <svg viewBox="0 0 100 100" fill="none" style="width: ${size}; height: ${size}; display: inline-block; vertical-align: middle;">
+        <g fill="${color}">
+          <!-- Row 1: Top-Left Leaf Tile -->
+          <path d="M 5,20 C 5,10.5 10.5,5 20,5 L 26,5 C 29.5,5 31,6.5 31,10 L 31,26 C 31,29.5 29.5,31 26,31 L 10,31 C 6.5,31 5,29.5 5,26 Z"/>
+          <!-- Row 1: Top-Middle Tile -->
+          <rect x="37" y="5" width="26" height="26" rx="6" ry="6"/>
+          <!-- Row 1: Top-Right Leaf Tile -->
+          <path d="M 74,5 L 80,5 C 89.5,5 95,10.5 95,20 L 95,26 C 95,29.5 93.5,31 90,31 L 74,31 C 70.5,31 69,29.5 69,26 L 69,10 C 69,6.5 70.5,5 74,5 Z"/>
+          <!-- Row 2: Middle Connected Fluid Shape -->
+          <rect x="5" y="37" width="26" height="26" rx="6" ry="6"/>
+          <rect x="37" y="37" width="26" height="26" rx="6" ry="6"/>
+          <path d="M 5,43 C 5,39 7,37 11,37 L 25,37 C 29,37 31,39 34,43 L 40,51 C 43,55 45,57 49,57 L 58,57 C 61.5,57 63,58.5 63,62 L 63,63 C 63,66.5 61.5,68 58,68 L 44,68 C 40,68 38,66 35,62 L 29,54 C 26,50 24,48 20,48 L 11,48 C 7.5,48 5,46.5 5,43 Z"/>
+          <!-- Row 3: Bottom-Left Leaf Tile -->
+          <path d="M 5,74 C 5,70.5 6.5,69 10,69 L 26,69 C 29.5,69 31,70.5 31,74 L 31,85 C 31,94.5 25.5,100 16,100 L 10,100 C 6.5,100 5,98.5 5,95 Z"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  // --------------------------------------------------------------------------
   // DOM INITIALIZATION
   // --------------------------------------------------------------------------
   initDOM() {
@@ -184,10 +208,12 @@ class FincateEngine {
       <!-- Top Navigation Header -->
       <header class="app-header">
         <div class="header-container">
-          <div class="brand-wrapper">
-            <div class="brand-logo">🪙</div>
+          <div class="brand-wrapper" id="headerBrandLogo">
+            <div class="brand-logo-badge" title="Finacate Financial Literacy & Market Platform">
+              ${this.getFinacateSymbolSVG('#ffffff', '28px')}
+            </div>
             <div>
-              <div class="brand-name gradient-text">FINCATE</div>
+              <div class="brand-name gradient-text">Finacate</div>
               <div class="brand-tagline">Dynamic Market & Financial Literacy Platform</div>
             </div>
           </div>
@@ -200,6 +226,9 @@ class FincateEngine {
             <button class="nav-tab-btn" data-tab="cases"><span>💼</span> Case Studies</button>
             <button class="nav-tab-btn" data-tab="glossary"><span>📖</span> Glossary</button>
             <button class="nav-tab-btn" data-tab="leaderboard"><span>🏆</span> Profile & Ranks</button>
+            <button class="nav-tab-btn" id="headerTourBtn" style="border: 1px solid rgba(45,212,191,0.3); background: rgba(45,212,191,0.08); color: var(--brand-mint);" title="How to Play & Platform Tour">
+              <span>❓</span> Guide
+            </button>
           </nav>
 
           <!-- User Stats Status Bar -->
@@ -235,21 +264,25 @@ class FincateEngine {
       </main>
 
       <!-- Floating FinAI Assistant Button & Chat Drawer -->
-      <div class="finai-fab-btn" id="finAiFab" title="Ask FinAI Assistant">🤖</div>
+      <div class="finai-fab-btn" id="finAiFab" title="Ask FinAI Assistant">
+        ${this.getFinacateSymbolSVG('#ffffff', '28px')}
+      </div>
       <div class="finai-chat-drawer" id="finAiDrawer">
         <div class="chat-header">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 1.3rem;">🤖</span>
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div style="width: 28px; height: 28px; background: #145e57; border: 1px solid rgba(45,212,191,0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 3px;">
+              ${this.getFinacateSymbolSVG('#ffffff', '100%')}
+            </div>
             <div>
-              <div style="font-weight: 700; font-size: 0.95rem;">FinAI Learning Assistant</div>
-              <div style="font-size: 0.7rem; color: var(--accent-emerald);">● Online & Ready to Teach</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #f3faf8;">FinAI Learning Assistant</div>
+              <div style="font-size: 0.7rem; color: var(--accent-cyan);">● Online & Ready to Teach</div>
             </div>
           </div>
           <button class="modal-close-btn" id="closeFinAiBtn">✕</button>
         </div>
         <div class="chat-messages-container" id="finAiMessages">
           <div class="chat-bubble bot">
-            👋 Hello! I am <strong>FinAI</strong>, your 24/7 financial tutor. Ask me to simplify any concept, explain today's market swings, or analyze your portfolio risk!
+            👋 Hello! I am <strong>FinAI</strong>, your 24/7 financial tutor powered by Finacate. Ask me to simplify any concept, explain today's market swings, or analyze your portfolio risk!
           </div>
         </div>
         <div class="chat-prompt-chips">
@@ -274,12 +307,23 @@ class FincateEngine {
   // --------------------------------------------------------------------------
   bindEvents() {
     // Navigation Tabs
-    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    document.querySelectorAll('.nav-tab-btn[data-tab]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const tab = btn.dataset.tab;
         this.switchTab(tab);
       });
     });
+
+    // Header Tour Button & Logo
+    const tourBtn = document.getElementById('headerTourBtn');
+    if (tourBtn) {
+      tourBtn.addEventListener('click', () => this.showHowToPlayTourModal());
+    }
+
+    const brandLogo = document.getElementById('headerBrandLogo');
+    if (brandLogo) {
+      brandLogo.addEventListener('click', () => this.switchTab('home'));
+    }
 
     // FinAI Chat Widget Toggle
     const fab = document.getElementById('finAiFab');
@@ -436,9 +480,13 @@ class FincateEngine {
       <!-- Hero Banner -->
       <div class="hero-banner">
         <div class="hero-main-card glass-card">
-          <div class="hero-title">Welcome back, <span class="gradient-text">${user.name}</span>!</div>
+          <div class="hero-brand-pill">
+            <span style="display:inline-flex; width:14px; height:14px;">${this.getFinacateSymbolSVG('#2dd4bf', '14px')}</span>
+            FINACATE FINANCIAL SIMULATOR &amp; ACADEMY
+          </div>
+          <div class="hero-title">Welcome to <span class="gradient-text">Finacate</span>, ${user.name}!</div>
           <p class="hero-subtitle">
-            Master the rules of wealth through risk-aware practice. Learn financial concepts, earn FinCoins, and test your strategies in the dynamic simulator.
+            Master wealth creation, risk-adjusted portfolio management, and market mechanics in an interactive, safe environment. Learn concepts, earn FinCoins, and test strategies in real time.
           </p>
           <div class="hero-actions">
             <button class="btn-primary" id="heroLearnBtn"><span>📚</span> Continue Learning</button>
@@ -492,8 +540,92 @@ class FincateEngine {
         </div>
       </div>
 
+      <!-- Guided 3-Step Learning Roadmap for Beginners -->
+      <div class="roadmap-container">
+        <div class="section-header" style="margin-bottom: 0.5rem;">
+          <h3 class="section-title"><span>🧭</span> Your Quick-Start Learning Roadmap</h3>
+          <span style="font-size: 0.8rem; color: var(--brand-mint); font-weight: 600;">Follow steps 1-3 to level up fast</span>
+        </div>
+        <div class="roadmap-grid">
+          <!-- Step 1 -->
+          <div class="roadmap-card ${user.completedLessons.length > 0 ? '' : 'active-step'}">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span class="step-num-badge ${user.completedLessons.length > 0 ? 'done' : 'next'}">
+                  ${user.completedLessons.length > 0 ? '✓ COMPLETED' : '👉 STEP 1'}
+                </span>
+                <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">+200 Coins</span>
+              </div>
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.35rem;">📚 Learn Cash Flow Basics</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+                Read the 3-minute beginner guide on 50/30/20 budgeting and emergency safety buffers.
+              </p>
+            </div>
+            <button class="btn-primary" id="step1ActionBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem; width: 100%; justify-content: center;">
+              ${user.completedLessons.length > 0 ? 'Review Lesson' : 'Start 3-Min Lesson →'}
+            </button>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="roadmap-card ${portfolio.history.length > 0 ? '' : (user.completedLessons.length > 0 ? 'active-step' : '')}">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span class="step-num-badge ${portfolio.history.length > 0 ? 'done' : 'next'}">
+                  ${portfolio.history.length > 0 ? '✓ COMPLETED' : '👉 STEP 2'}
+                </span>
+                <span style="font-size: 0.75rem; color: #2dd4bf; font-weight: 700;">+25 XP</span>
+              </div>
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.35rem;">📈 Make First Practice Trade</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+                Use your starter coins to purchase shares of low-risk OMNI Index ETF or defensive Treasury Bonds.
+              </p>
+            </div>
+            <button class="btn-primary" id="step2ActionBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem; width: 100%; justify-content: center;">
+              ${portfolio.history.length > 0 ? 'View Open Positions' : 'Open Market Floor →'}
+            </button>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="roadmap-card ${Object.keys(user.caseStudyProgress).length > 0 ? '' : (portfolio.history.length > 0 ? 'active-step' : '')}">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span class="step-num-badge ${Object.keys(user.caseStudyProgress).length > 0 ? 'done' : 'next'}">
+                  ${Object.keys(user.caseStudyProgress).length > 0 ? '✓ COMPLETED' : '👉 STEP 3'}
+                </span>
+                <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">+150 Coins</span>
+              </div>
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.35rem;">💼 Test 3-Year Life Dilemma</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+                Decide how to allocate a 10,000 Coin windfall and see how your decision holds up over 3 years.
+              </p>
+            </div>
+            <button class="btn-primary" id="step3ActionBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem; width: 100%; justify-content: center;">
+              ${Object.keys(user.caseStudyProgress).length > 0 ? 'Review Case Outcomes' : 'Explore Case Dilemmas →'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1-Click Smart Starter Portfolio Banner -->
+      <div class="smart-diversify-card glass-card">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #145e57, #2dd4bf); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 15px rgba(45,212,191,0.3);">
+            ✨
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; color: #ffffff; margin-bottom: 0.2rem;">New to investing? Deploy a 1-Click Smart Portfolio</h4>
+            <p style="font-size: 0.84rem; color: var(--text-secondary);">
+              Automatically allocates 50% into OMNI Index ETF + 30% US Treasury Bonds + 20% Tech AI &amp; Clean Utilities with zero manual math!
+            </p>
+          </div>
+        </div>
+        <button class="btn-primary" id="homeQuickDeployBtn" style="white-space: nowrap; font-size: 0.9rem; padding: 0.7rem 1.25rem;">
+          <span>🚀</span> Deploy 1-Click Portfolio
+        </button>
+      </div>
+
       <!-- Live Market Summary Strip -->
-      <div class="section-header">
+      <div class="section-header" style="margin-top: 1.75rem;">
         <h3 class="section-title"><span>📊</span> Live Market Floor Summary</h3>
         <span style="font-size: 0.8rem; color: var(--accent-cyan);">Simulation Day #${this.state.simulationDay}</span>
       </div>
@@ -528,7 +660,7 @@ class FincateEngine {
                   </div>
                   <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem; color: #f8fafc;">${news.title}</div>
                   <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">${news.summary}</p>
-                  <div style="font-size: 0.75rem; color: #a5b4fc; background: rgba(99, 102, 241, 0.1); padding: 0.4rem 0.6rem; border-radius: 4px; border-left: 2px solid #6366f1;">
+                  <div style="font-size: 0.75rem; color: #a7f3d0; background: rgba(45, 212, 191, 0.1); padding: 0.4rem 0.6rem; border-radius: 4px; border-left: 2px solid #2dd4bf;">
                     💡 <strong>Learning Takeaway:</strong> ${news.educationalNote}
                   </div>
                 </div>
@@ -547,6 +679,33 @@ class FincateEngine {
     document.getElementById('heroLearnBtn').addEventListener('click', () => this.switchTab('learn'));
     document.getElementById('heroSimBtn').addEventListener('click', () => this.switchTab('simulator'));
     document.getElementById('heroCrashBtn').addEventListener('click', () => this.triggerMarketEvent('evt_market_crash'));
+    
+    // Bind Roadmap Step Actions
+    const step1Btn = document.getElementById('step1ActionBtn');
+    if (step1Btn) {
+      step1Btn.addEventListener('click', () => {
+        const mod1 = this.data.modules[0];
+        if (mod1 && mod1.lessons[0]) {
+          this.activeLesson = { ...mod1.lessons[0], moduleTitle: mod1.title };
+          this.switchTab('learn');
+        }
+      });
+    }
+
+    const step2Btn = document.getElementById('step2ActionBtn');
+    if (step2Btn) {
+      step2Btn.addEventListener('click', () => this.switchTab('simulator'));
+    }
+
+    const step3Btn = document.getElementById('step3ActionBtn');
+    if (step3Btn) {
+      step3Btn.addEventListener('click', () => this.switchTab('cases'));
+    }
+
+    const quickDeployBtn = document.getElementById('homeQuickDeployBtn');
+    if (quickDeployBtn) {
+      quickDeployBtn.addEventListener('click', () => this.deploySmartStarterAllocation());
+    }
   }
 
   renderHomeTickers() {
@@ -596,7 +755,7 @@ class FincateEngine {
           </div>
           <div style="text-align: right; flex-shrink: 0; margin-left: 1rem;">
             <div style="font-size: 0.8rem; font-weight: 700; color: #fbbf24;">+${ch.rewardCoins} Coins</div>
-            <div style="font-size: 0.75rem; color: #a5b4fc;">+${ch.rewardXP} XP</div>
+            <div style="font-size: 0.75rem; color: #2dd4bf;">+${ch.rewardXP} XP</div>
           </div>
         </div>
       `;
@@ -704,7 +863,7 @@ class FincateEngine {
           <div style="display: flex; gap: 0.5rem; align-items: center;">
             <span class="news-badge badge-sim">⏱️ ${les.readTime}</span>
             <span class="news-badge" style="background: rgba(245,158,11,0.2); color: #fbbf24;">+${les.coinReward} Coins</span>
-            <span class="news-badge" style="background: rgba(99,102,241,0.2); color: #a5b4fc;">+${les.xpReward} XP</span>
+            <span class="news-badge" style="background: rgba(45,212,191,0.15); color: #2dd4bf;">+${les.xpReward} XP</span>
           </div>
         </div>
 
@@ -754,7 +913,7 @@ class FincateEngine {
         <!-- Interactive Quiz Section -->
         <div class="lesson-quiz-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; color: #a5b4fc; font-weight: 700; letter-spacing: 0.05em;">
+            <span style="font-size: 0.75rem; text-transform: uppercase; color: #2dd4bf; font-weight: 700; letter-spacing: 0.05em;">
               Concept Check Quiz
             </span>
             ${isCompleted ? '<span style="color: var(--accent-emerald); font-weight: 600; font-size: 0.85rem;">✅ Lesson Completed</span>' : ''}
@@ -885,6 +1044,25 @@ class FincateEngine {
     const highRiskPct = netWorth > 0 ? Math.round((highRiskValue / netWorth) * 100) : 0;
 
     container.innerHTML = `
+      <!-- Friendly Explainer Helper Banner -->
+      <div class="friendly-helper-banner">
+        <div class="helper-text-content">
+          <h4><span>💡</span> Live Trading Floor — Beginner Cheat Sheet</h4>
+          <p>
+            Pick an asset on the left, choose how much to invest, and click <strong>Execute Order</strong>.
+            Watch your holdings fluctuate as simulation days advance!
+          </p>
+          <div class="helper-tags-row">
+            <span class="helper-tag" style="border-color: rgba(16,185,129,0.4); color: #34d399;">🛡️ Low Risk: OMNI ETF &amp; BOND (Safe compounders)</span>
+            <span class="helper-tag" style="border-color: rgba(245,158,11,0.4); color: #fbbf24;">⚡ Moderate: VOLT Utility &amp; GOLD (Steady &amp; Hedged)</span>
+            <span class="helper-tag" style="border-color: rgba(244,63,94,0.4); color: #fb7185;">🔥 High Volatility: APEX AI &amp; Crypto (High Risk)</span>
+          </div>
+        </div>
+        <button class="btn-primary" id="btnSimOneClick" style="white-space: nowrap; font-size: 0.85rem; padding: 0.65rem 1.1rem; flex-shrink: 0;">
+          <span>✨</span> 1-Click Smart Portfolio
+        </button>
+      </div>
+
       <div class="simulator-layout">
         <!-- 1. Left Column: Assets Directory -->
         <div class="asset-list-sidebar">
@@ -996,7 +1174,7 @@ class FincateEngine {
               </div>
               <div class="metric-box">
                 <label>Balance Sheet Strength</label>
-                <span style="color: #a5b4fc; font-size: 0.85rem;">${asset.financialStrength}</span>
+                <span style="color: #2dd4bf; font-size: 0.85rem;">${asset.financialStrength}</span>
               </div>
             </div>
 
@@ -1042,11 +1220,22 @@ class FincateEngine {
                 <input type="number" id="tradeQtyInput" value="10" min="1" step="1" />
                 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">UNITS</span>
               </div>
-              <div class="percent-preset-chips">
-                <button class="preset-chip-btn" data-pct="25">25%</button>
-                <button class="preset-chip-btn" data-pct="50">50%</button>
-                <button class="preset-chip-btn" data-pct="75">75%</button>
-                <button class="preset-chip-btn" data-pct="100">100%</button>
+              
+              <!-- Quick Coin Amount Buttons -->
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.5rem;">Quick Coin Amount:</div>
+              <div class="quick-amount-grid">
+                <button class="btn-quick-amount" data-coins="500">+500 🪙</button>
+                <button class="btn-quick-amount" data-coins="1000">+1,000 🪙</button>
+                <button class="btn-quick-amount" data-coins="2500">+2,500 🪙</button>
+                <button class="btn-quick-amount" data-coins="max">All-in 🪙</button>
+              </div>
+
+              <!-- Percent Presets -->
+              <div class="percent-preset-chips" style="margin-top: 0.5rem;">
+                <button class="preset-chip-btn" data-pct="25">25% Cash</button>
+                <button class="preset-chip-btn" data-pct="50">50% Cash</button>
+                <button class="preset-chip-btn" data-pct="75">75% Cash</button>
+                <button class="preset-chip-btn" data-pct="100">100% Cash</button>
               </div>
             </div>
 
@@ -1066,7 +1255,15 @@ class FincateEngine {
               </div>
             </div>
 
-            <button class="btn-primary btn-emerald btn-trade-execute" id="btnExecuteTrade">
+            <!-- Plain-English Trade Explanation -->
+            <div class="plain-english-box" id="plainEnglishTradeSummary">
+              <span>💡</span>
+              <div id="plainEnglishSummaryText">
+                <strong>Plain-English:</strong> Buying <strong>10 shares</strong> of <strong>${asset.symbol}</strong> costs 🪙${(10 * asset.price).toFixed(2)}. If price rises +5%, your profit is <strong>+🪙${(10 * asset.price * 0.05).toFixed(2)}</strong>.
+              </div>
+            </div>
+
+            <button class="btn-primary btn-emerald btn-trade-execute" id="btnExecuteTrade" style="margin-top: 0.25rem;">
               EXECUTE BUY ORDER
             </button>
           </div>
@@ -1180,6 +1377,12 @@ class FincateEngine {
       });
     }
 
+    // 1-Click Smart Portfolio Button
+    const simOneClickBtn = document.getElementById('btnSimOneClick');
+    if (simOneClickBtn) {
+      simOneClickBtn.addEventListener('click', () => this.deploySmartStarterAllocation());
+    }
+
     // Trigger shock event button
     const btnTriggerShock = document.getElementById('btnTriggerShock');
     if (btnTriggerShock) {
@@ -1201,6 +1404,17 @@ class FincateEngine {
       const qty = parseInt(qtyInput.value) || 0;
       const total = qty * this.activeAsset.price;
       totalCostEl.textContent = `🪙 ${total.toFixed(2)}`;
+
+      const summaryTextEl = document.getElementById('plainEnglishSummaryText');
+      if (summaryTextEl) {
+        if (orderMode === 'BUY') {
+          const upside = (total * 0.05).toFixed(2);
+          summaryTextEl.innerHTML = `<strong>Plain-English:</strong> Buying <strong>${qty} shares</strong> of <strong>${this.activeAsset.symbol}</strong> costs 🪙${total.toFixed(2)}. If the price rises +5%, your profit is <strong>+🪙${upside}</strong>.`;
+        } else {
+          const proceeds = (qty * this.activeAsset.price).toFixed(2);
+          summaryTextEl.innerHTML = `<strong>Plain-English:</strong> Selling <strong>${qty} shares</strong> of <strong>${this.activeAsset.symbol}</strong> will return <strong>🪙${proceeds}</strong> cash into your balance.`;
+        }
+      }
     };
 
     qtyInput.addEventListener('input', updateCost);
@@ -1221,6 +1435,27 @@ class FincateEngine {
       executeBtn.className = 'btn-primary btn-rose btn-trade-execute';
       executeBtn.textContent = 'EXECUTE SELL ORDER';
       updateCost();
+    });
+
+    // Quick Coin Amount Buttons
+    document.querySelectorAll('.btn-quick-amount').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const coinStr = btn.dataset.coins;
+        if (coinStr === 'max') {
+          if (orderMode === 'BUY') {
+            const maxShares = Math.floor(this.state.portfolio.cash / this.activeAsset.price);
+            qtyInput.value = Math.max(1, maxShares);
+          } else {
+            const holding = this.state.portfolio.holdings[this.activeAsset.symbol] || { qty: 0 };
+            qtyInput.value = Math.max(1, holding.qty);
+          }
+        } else {
+          const targetCoins = parseInt(coinStr);
+          const targetShares = Math.max(1, Math.floor(targetCoins / this.activeAsset.price));
+          qtyInput.value = targetShares;
+        }
+        updateCost();
+      });
     });
 
     // Preset chips
@@ -1367,11 +1602,11 @@ class FincateEngine {
     const getVolY = (vol) => height - (vol / (maxVolume || 1)) * volumeHeight;
 
     // Clear background
-    ctx.fillStyle = '#070a11';
+    ctx.fillStyle = '#050d0c';
     ctx.fillRect(0, 0, width, height);
 
     // Draw Grid lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.strokeStyle = 'rgba(45, 212, 191, 0.08)';
     ctx.lineWidth = 1;
     for (let i = 1; i <= 4; i++) {
       const y = (chartHeight / 4) * i;
@@ -1382,7 +1617,7 @@ class FincateEngine {
 
       // Price labels on right
       const priceAtY = maxPrice - (i / 4) * (maxPrice - minPrice);
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = '#90aba7';
       ctx.font = '10px Inter';
       ctx.fillText(priceAtY.toFixed(2), width - 45, y - 4);
     }
@@ -1395,7 +1630,7 @@ class FincateEngine {
       const isUp = c.close >= c.open;
       const vY = getVolY(c.volume);
 
-      ctx.fillStyle = isUp ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)';
+      ctx.fillStyle = isUp ? 'rgba(45, 212, 191, 0.35)' : 'rgba(244, 63, 94, 0.3)';
       ctx.fillRect(x, vY, candleWidth, height - vY);
     });
 
@@ -1404,7 +1639,7 @@ class FincateEngine {
       candles.forEach((c, idx) => {
         const x = 20 + idx * (candleWidth + 3);
         const isUp = c.close >= c.open;
-        const color = isUp ? '#10b981' : '#f43f5e';
+        const color = isUp ? '#2dd4bf' : '#f43f5e';
 
         const openY = getY(c.open);
         const closeY = getY(c.close);
@@ -1435,7 +1670,7 @@ class FincateEngine {
         else ctx.lineTo(x, y);
       });
 
-      ctx.strokeStyle = this.activeAsset.color || '#6366f1';
+      ctx.strokeStyle = this.activeAsset.color || '#2dd4bf';
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
@@ -1640,13 +1875,13 @@ class FincateEngine {
           <div style="font-size: 0.95rem; font-weight: 700; color: ${option.isPrudent ? '#34d399' : '#fb7185'}; margin-bottom: 0.5rem;">
             ${option.isPrudent ? '✅ Prudent Risk Management' : '⚠️ Sub-optimal Emotional Decision'}
           </div>
-          <p style="font-size: 0.88rem; color: #e2e8f0; margin-bottom: 0.75rem;">
+          <p style="font-size: 0.88rem; color: #e3f0ed; margin-bottom: 0.75rem;">
             ${option.feedback}
           </p>
-          <div style="background: rgba(15,23,42,0.6); padding: 0.75rem; border-radius: 6px; font-size: 0.82rem; color: #a5b4fc;">
+          <div style="background: rgba(14,38,36,0.8); border: 1px solid rgba(45,212,191,0.25); padding: 0.75rem; border-radius: 6px; font-size: 0.82rem; color: #a7f3d0;">
             <strong>Macro Insight (${event.debrief.macroConcept}):</strong> ${event.debrief.keyTakeaway}
           </div>
-          <button class="btn-primary btn-emerald" id="closeDebriefBtn" style="margin-top: 1rem; width: 100%;">
+          <button class="btn-primary" id="closeDebriefBtn" style="margin-top: 1rem; width: 100%;">
             Continue to Market Floor
           </button>
         `;
@@ -1727,7 +1962,7 @@ class FincateEngine {
 
         resultBox.style.display = 'block';
         resultBox.innerHTML = `
-          <div style="font-size: 0.8rem; text-transform: uppercase; color: #a5b4fc; font-weight: 700; margin-bottom: 0.5rem;">
+          <div style="font-size: 0.8rem; text-transform: uppercase; color: #2dd4bf; font-weight: 700; margin-bottom: 0.5rem;">
             Simulation Timeline: ${choice.title}
           </div>
           <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 0.5rem;">
@@ -1736,7 +1971,7 @@ class FincateEngine {
           <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 0.75rem;">
             📅 <strong>Year 3:</strong> ${choice.simulatedOutcome.year3}
           </div>
-          <div style="background: rgba(99,102,241,0.15); padding: 0.6rem; border-radius: 4px; font-size: 0.8rem; color: #a5b4fc;">
+          <div style="background: rgba(45,212,191,0.12); padding: 0.6rem; border-radius: 4px; font-size: 0.8rem; color: #a7f3d0;">
             💡 <strong>Key Wisdom:</strong> ${choice.simulatedOutcome.lessons}
           </div>
         `;
@@ -1975,9 +2210,14 @@ class FincateEngine {
         <div class="modal-overlay active">
           <div class="modal-container">
             <div class="modal-header">
-              <div>
-                <span class="news-badge badge-sim">STEP ${currentQ + 1} OF ${questions.length}</span>
-                <h2 style="font-size: 1.4rem; margin-top: 0.35rem;">Financial Knowledge Onboarding</h2>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 38px; height: 38px; background: #145e57; border: 1px solid rgba(45,212,191,0.4); border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0;">
+                  ${this.getFinacateSymbolSVG('#ffffff', '100%')}
+                </div>
+                <div>
+                  <span class="news-badge badge-real">FINACATE DIAGNOSTIC • STEP ${currentQ + 1} OF ${questions.length}</span>
+                  <h2 style="font-size: 1.35rem; margin-top: 0.25rem; color: #ffffff;">Financial Literacy Starter Assessment</h2>
+                </div>
               </div>
             </div>
 
